@@ -1,0 +1,24 @@
+{
+  "name": "telegram-voting-bot-dashboard",
+  "version": "1.0.0",
+  "description": "Telegram voting bot with Google Sheets backend and web dashboard",
+  "main": "src/dashboard.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/dashboard.js",
+    "bot": "node src/bot.js",
+    "dev": "nodemon src/dashboard.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-basic-auth": "^1.2.1",
+    "express-session": "^1.17.3",
+    "googleapis": "^133.0.0",
+    "node-telegram-bot-api": "^0.66.0",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  }
+}
