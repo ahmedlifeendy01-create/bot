@@ -180,26 +180,303 @@ app.get('/', async (req, res) => {
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
+      *{margin:0;padding:0;box-sizing:border-box}
       body{
         font-family:'Cairo',sans-serif;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color:#ffffff;margin:0;padding:24px;min-height:100vh
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        color:#ffffff;margin:0;padding:0;min-height:100vh;
+        overflow-x:hidden
       }
-      .container{max-width:1200px;margin:0 auto;background:rgba(255, 255, 255, 0.05);border-radius:20px;padding:30px;backdrop-filter:blur(1px);box-shadow:0 0 20px rgba(0,0,0,0.2)}
-      h1{margin:0 0 16px 0;font-size:32px;color:#ffffff;text-shadow:2px 2px 4px rgba(0,0,0,0.5)}
-      .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
-      .card{background:rgba(255, 255, 255, 0.05);border:1px solid rgba(59, 130, 246, 0.3);border-radius:12px;padding:16px;backdrop-filter:blur(1px);box-shadow:0 4px 6px rgba(0,0,0,0.1)}
-      .muted{color:#64748b}
-      table{width:100%;border-collapse:collapse}
-      th,td{border-bottom:1px solid rgba(59, 130, 246, 0.2);padding:8px;text-align:right}
-      input,select,button{background:rgba(255, 255, 255, 0.9);border:1px solid rgba(59, 130, 246, 0.3);color:#1e293b;border-radius:8px;padding:8px;backdrop-filter:blur(5px)}
-      .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;background:rgba(59, 130, 246, 0.02);padding:16px;border-radius:12px;backdrop-filter:blur(1px)}
-      .row{display:flex;gap:8px;align-items:center}
-      .badge{display:inline-block;padding:4px 12px;border-radius:999px;font-size:12px;font-weight:bold;text-shadow:1px 1px 2px rgba(0,0,0,0.1)}
-      .bg-green{background:linear-gradient(135deg, #10b981, #059669);color:#ffffff;box-shadow:0 2px 4px rgba(16, 185, 129, 0.3)}
-      .bg-yellow{background:linear-gradient(135deg, #f59e0b, #d97706);color:#ffffff;box-shadow:0 2px 4px rgba(245, 158, 11, 0.3)}
-      .bg-red{background:linear-gradient(135deg, #ef4444, #dc2626);color:#ffffff;box-shadow:0 2px 4px rgba(239, 68, 68, 0.3)}
+      .navbar{
+        background:rgba(255,255,255,0.1);
+        backdrop-filter:blur(10px);
+        border-bottom:1px solid rgba(255,255,255,0.2);
+        padding:1rem 2rem;
+        position:fixed;
+        top:0;
+        left:0;
+        right:0;
+        z-index:1000;
+        display:flex;
+        justify-content:space-between;
+        align-items:center
+      }
+      .navbar h1{
+        font-size:1.5rem;
+        font-weight:700;
+        color:#ffffff;
+        text-shadow:0 2px 4px rgba(0,0,0,0.3)
+      }
+      .navbar .logo{
+        display:flex;
+        align-items:center;
+        gap:0.5rem
+      }
+      .main-content{
+        margin-top:80px;
+        padding:2rem;
+        max-width:1400px;
+        margin-left:auto;
+        margin-right:auto
+      }
+      .stats-grid{
+        display:grid;
+        grid-template-columns:repeat(auto-fit, minmax(300px, 1fr));
+        gap:1.5rem;
+        margin-bottom:2rem
+      }
+      .stat-card{
+        background:rgba(255,255,255,0.1);
+        backdrop-filter:blur(10px);
+        border:1px solid rgba(255,255,255,0.2);
+        border-radius:16px;
+        padding:1.5rem;
+        box-shadow:0 8px 32px rgba(0,0,0,0.1);
+        transition:all 0.3s ease;
+        position:relative;
+        overflow:hidden
+      }
+      .stat-card:hover{
+        transform:translateY(-5px);
+        box-shadow:0 12px 40px rgba(0,0,0,0.2)
+      }
+      .stat-card::before{
+        content:'';
+        position:absolute;
+        top:0;
+        left:0;
+        right:0;
+        height:4px;
+        background:linear-gradient(90deg, #4f46e5, #7c3aed, #ec4899);
+        border-radius:16px 16px 0 0
+      }
+      .stat-header{
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        margin-bottom:1rem
+      }
+      .stat-title{
+        font-size:0.9rem;
+        color:rgba(255,255,255,0.8);
+        font-weight:500
+      }
+      .stat-icon{
+        width:40px;
+        height:40px;
+        border-radius:12px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        font-size:1.2rem;
+        color:#ffffff
+      }
+      .stat-value{
+        font-size:2.5rem;
+        font-weight:700;
+        color:#ffffff;
+        margin-bottom:0.5rem;
+        text-shadow:0 2px 4px rgba(0,0,0,0.3)
+      }
+      .stat-change{
+        display:flex;
+        align-items:center;
+        gap:0.5rem;
+        font-size:0.9rem;
+        font-weight:500
+      }
+      .chart-container{
+        background:rgba(255,255,255,0.1);
+        backdrop-filter:blur(10px);
+        border:1px solid rgba(255,255,255,0.2);
+        border-radius:16px;
+        padding:1.5rem;
+        margin-bottom:2rem;
+        box-shadow:0 8px 32px rgba(0,0,0,0.1)
+      }
+      .chart-title{
+        font-size:1.2rem;
+        font-weight:600;
+        color:#ffffff;
+        margin-bottom:1rem;
+        display:flex;
+        align-items:center;
+        gap:0.5rem
+      }
+      .controls-section{
+        background:rgba(255,255,255,0.1);
+        backdrop-filter:blur(10px);
+        border:1px solid rgba(255,255,255,0.2);
+        border-radius:16px;
+        padding:1.5rem;
+        margin-bottom:2rem;
+        box-shadow:0 8px 32px rgba(0,0,0,0.1)
+      }
+      .section-title{
+        font-size:1.2rem;
+        font-weight:600;
+        color:#ffffff;
+        margin-bottom:1rem;
+        display:flex;
+        align-items:center;
+        gap:0.5rem
+      }
+      .form-grid{
+        display:grid;
+        grid-template-columns:repeat(auto-fit, minmax(250px, 1fr));
+        gap:1rem;
+        margin-bottom:1rem
+      }
+      .form-group{
+        display:flex;
+        flex-direction:column;
+        gap:0.5rem
+      }
+      .form-label{
+        font-size:0.9rem;
+        color:rgba(255,255,255,0.8);
+        font-weight:500
+      }
+      .form-input{
+        background:rgba(255,255,255,0.1);
+        border:1px solid rgba(255,255,255,0.2);
+        border-radius:8px;
+        padding:0.75rem;
+        color:#ffffff;
+        font-size:0.9rem;
+        transition:all 0.3s ease
+      }
+      .form-input:focus{
+        outline:none;
+        border-color:#4f46e5;
+        box-shadow:0 0 0 3px rgba(79, 70, 229, 0.1)
+      }
+      .form-input::placeholder{
+        color:rgba(255,255,255,0.5)
+      }
+      .btn{
+        background:linear-gradient(135deg, #4f46e5, #7c3aed);
+        border:none;
+        border-radius:8px;
+        padding:0.75rem 1.5rem;
+        color:#ffffff;
+        font-weight:600;
+        cursor:pointer;
+        transition:all 0.3s ease;
+        display:inline-flex;
+        align-items:center;
+        gap:0.5rem;
+        text-decoration:none;
+        font-size:0.9rem
+      }
+      .btn:hover{
+        transform:translateY(-2px);
+        box-shadow:0 8px 25px rgba(79, 70, 229, 0.3)
+      }
+      .btn-danger{
+        background:linear-gradient(135deg, #ef4444, #dc2626)
+      }
+      .btn-success{
+        background:linear-gradient(135deg, #10b981, #059669)
+      }
+      .btn-warning{
+        background:linear-gradient(135deg, #f59e0b, #d97706)
+      }
+      .table-container{
+        background:rgba(255,255,255,0.1);
+        backdrop-filter:blur(10px);
+        border:1px solid rgba(255,255,255,0.2);
+        border-radius:16px;
+        padding:1.5rem;
+        margin-bottom:2rem;
+        box-shadow:0 8px 32px rgba(0,0,0,0.1);
+        overflow-x:auto
+      }
+      .table{
+        width:100%;
+        border-collapse:collapse;
+        color:#ffffff
+      }
+      .table th{
+        background:rgba(255,255,255,0.1);
+        padding:1rem;
+        text-align:right;
+        font-weight:600;
+        color:#ffffff;
+        border-bottom:1px solid rgba(255,255,255,0.2)
+      }
+      .table td{
+        padding:1rem;
+        border-bottom:1px solid rgba(255,255,255,0.1);
+        color:rgba(255,255,255,0.9)
+      }
+      .table tr:hover{
+        background:rgba(255,255,255,0.05)
+      }
+      .badge{
+        display:inline-flex;
+        align-items:center;
+        gap:0.25rem;
+        padding:0.25rem 0.75rem;
+        border-radius:20px;
+        font-size:0.8rem;
+        font-weight:600;
+        text-transform:uppercase;
+        letter-spacing:0.5px
+      }
+      .badge-success{
+        background:linear-gradient(135deg, #10b981, #059669);
+        color:#ffffff;
+        box-shadow:0 2px 8px rgba(16, 185, 129, 0.3)
+      }
+      .badge-warning{
+        background:linear-gradient(135deg, #f59e0b, #d97706);
+        color:#ffffff;
+        box-shadow:0 2px 8px rgba(245, 158, 11, 0.3)
+      }
+      .badge-danger{
+        background:linear-gradient(135deg, #ef4444, #dc2626);
+        color:#ffffff;
+        box-shadow:0 2px 8px rgba(239, 68, 68, 0.3)
+      }
+      .badge-info{
+        background:linear-gradient(135deg, #3b82f6, #1d4ed8);
+        color:#ffffff;
+        box-shadow:0 2px 8px rgba(59, 130, 246, 0.3)
+      }
+      .loading{
+        display:flex;
+        justify-content:center;
+        align-items:center;
+        padding:2rem;
+        color:rgba(255,255,255,0.7)
+      }
+      .error{
+        background:rgba(239, 68, 68, 0.1);
+        border:1px solid rgba(239, 68, 68, 0.3);
+        border-radius:8px;
+        padding:1rem;
+        color:#fca5a5;
+        margin:1rem 0
+      }
+      .success{
+        background:rgba(16, 185, 129, 0.1);
+        border:1px solid rgba(16, 185, 129, 0.3);
+        border-radius:8px;
+        padding:1rem;
+        color:#6ee7b7;
+        margin:1rem 0
+      }
+      @media (max-width: 768px) {
+        .main-content{padding:1rem}
+        .stats-grid{grid-template-columns:1fr}
+        .form-grid{grid-template-columns:1fr}
+        .navbar{padding:1rem}
+        .navbar h1{font-size:1.2rem}
+      }
       .form-success{animation:fadeOut 3s ease-in-out forwards}
       @keyframes fadeOut{0%{opacity:1}100%{opacity:0}}
       .candidate-name{color:#1e40af;font-weight:bold;text-shadow:1px 1px 2px rgba(0,0,0,0.1)}
@@ -212,31 +489,150 @@ app.get('/', async (req, res) => {
           document.getElementById('supervisorForm')?.reset();
         }, 1000);
       }
+
+      // إنشاء الرسم البياني
+      document.addEventListener('DOMContentLoaded', function() {
+        const ctx = document.getElementById('votingChart');
+        if (ctx) {
+          const centerStats = ${JSON.stringify(centerStats)};
+          
+          new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+              labels: centerStats.map(c => c.center),
+              datasets: [{
+                data: centerStats.map(c => c.totalVoted),
+                backgroundColor: [
+                  'rgba(59, 130, 246, 0.8)',
+                  'rgba(16, 185, 129, 0.8)',
+                  'rgba(245, 158, 11, 0.8)'
+                ],
+                borderColor: [
+                  'rgba(59, 130, 246, 1)',
+                  'rgba(16, 185, 129, 1)',
+                  'rgba(245, 158, 11, 1)'
+                ],
+                borderWidth: 2
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: {
+                  position: 'bottom',
+                  labels: {
+                    color: '#ffffff',
+                    font: {
+                      family: 'Cairo',
+                      size: 14
+                    }
+                  }
+                },
+                tooltip: {
+                  backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                  titleColor: '#ffffff',
+                  bodyColor: '#ffffff',
+                  borderColor: 'rgba(255, 255, 255, 0.2)',
+                  borderWidth: 1
+                }
+              }
+            }
+          });
+        }
+      });
+
+      // تحديث الإحصائيات كل 30 ثانية
+      setInterval(() => {
+        location.reload();
+      }, 30000);
     </script>
   </head>
   <body>
-    <div class="container">
-      <div class="header">
-        <div>
-          <h1>🏛️ لوحة التحكم الانتخابية</h1>
-          <div class="candidate-name" style="font-size:24px;margin-top:8px">النائب علاء سليمان الحديوي</div>
-          <div class="muted" style="margin-top:4px">انتخابات مجلس النواب ٢٠٢٥ - محافظة سوهاج</div>
-        </div>
-        <div style="text-align:left">
-          <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
-            <div style="width:40px;height:40px;background:linear-gradient(135deg, #dc2626, #b91c1c);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;font-size:18px">🔥</div>
-            <div>
-              <div style="color:#dc2626;font-weight:bold;font-size:14px">حماة الوطن</div>
-              <div class="muted" style="font-size:12px">KUNAT AL-WATAN PARTY</div>
+    <nav class="navbar">
+      <div class="logo">
+        <i class="fas fa-chart-line"></i>
+        <h1>لوحة التحكم - النائب علاء سليمان الحديوي</h1>
+      </div>
+      <div class="navbar-actions">
+        <button onclick="exportCSV()" class="btn">
+          <i class="fas fa-download"></i>
+          تصدير CSV
+        </button>
+        <button onclick="location.reload()" class="btn">
+          <i class="fas fa-sync-alt"></i>
+          تحديث
+        </button>
+      </div>
+    </nav>
+
+    <div class="main-content">
+      <!-- إحصائيات عامة -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-header">
+            <span class="stat-title">إجمالي الناخبين</span>
+            <div class="stat-icon" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
+              <i class="fas fa-users"></i>
             </div>
           </div>
-          <div style="display:flex;align-items:center;gap:8px;margin:8px 0">
-            <div style="width:30px;height:20px;background:linear-gradient(135deg, #1e40af, #3b82f6);border-radius:4px;display:flex;align-items:center;justify-content:center;color:white;font-size:12px">🏛️</div>
-            <div class="muted" style="font-size:12px">مجلس النواب 2025</div>
+          <div class="stat-value">${stats.totalVoters}</div>
+          <div class="stat-change">
+            <i class="fas fa-arrow-up" style="color: #10b981;"></i>
+            <span>مسجلين في النظام</span>
           </div>
-          <div class="muted">الدائرة الرابعة</div>
-          <div class="muted">مراكز الدائرة: طما، طهطا، جهينه</div>
         </div>
+
+        <div class="stat-card">
+          <div class="stat-header">
+            <span class="stat-title">إجمالي المصوتين</span>
+            <div class="stat-icon" style="background: linear-gradient(135deg, #10b981, #059669);">
+              <i class="fas fa-vote-yea"></i>
+            </div>
+          </div>
+          <div class="stat-value">${stats.totalVoted}</div>
+          <div class="stat-change">
+            <i class="fas fa-arrow-up" style="color: #10b981;"></i>
+            <span>${stats.progressPercent}% من الإجمالي</span>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-header">
+            <span class="stat-title">الأصوات المتبقية</span>
+            <div class="stat-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+              <i class="fas fa-clock"></i>
+            </div>
+          </div>
+          <div class="stat-value">${stats.remaining}</div>
+          <div class="stat-change">
+            <i class="fas fa-arrow-down" style="color: #f59e0b;"></i>
+            <span>لم يتم التصويت بعد</span>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-header">
+            <span class="stat-title">نسبة الإنجاز</span>
+            <div class="stat-icon" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
+              <i class="fas fa-percentage"></i>
+            </div>
+          </div>
+          <div class="stat-value">${stats.progressPercent}%</div>
+          <div class="stat-change">
+            <i class="fas fa-chart-line" style="color: #8b5cf6;"></i>
+            <span>من إجمالي الناخبين</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- الرسم البياني -->
+      <div class="chart-container">
+        <div class="chart-title">
+          <i class="fas fa-chart-pie"></i>
+          إحصائيات التصويت حسب المركز
+        </div>
+        <canvas id="votingChart" width="400" height="200"></canvas>
       </div>
 
       <div class="card" style="margin-bottom:16px">

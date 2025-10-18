@@ -15,20 +15,36 @@ export function assertSheetsEnv() {
 function getAuth() {
   const scopes = ['https://www.googleapis.com/auth/spreadsheets'];
   
-  // استخدام ملف JSON مباشرة
-  const keyFile = process.env.GOOGLE_APPLICATION_CREDENTIALS;
-  if (keyFile && keyFile.trim() !== '') {
+  // محاولة استخدام JSON string مباشرة من Environment Variable
+  const credentialsJson = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+  if (credentialsJson && credentialsJson.trim() !== '') {
     try {
-      console.log('استخدام ملف JSON:', keyFile);
-      const auth = new google.auth.GoogleAuth({ keyFile, scopes });
+      // محاولة تحليل JSON string
+      const credentials = JSON.parse(credentialsJson);
+      console.log('استخدام JSON credentials من Environment Variable');
+      const auth = new google.auth.GoogleAuth({ 
+        credentials,
+        scopes 
+      });
       return auth;
-    } catch (error) {
-      console.error('خطأ في استخدام ملف JSON:', error.message);
-      throw new Error(`تعذر تحميل ملف JSON: ${error.message}`);
+    } catch (parseError) {
+      console.log('محاولة استخدام ملف JSON:', credentialsJson);
+      // إذا فشل التحليل، جرب كملف
+      try {
+        const auth = new google.auth.GoogleAuth({ 
+          keyFile: credentialsJson, 
+          scopes 
+        });
+        return auth;
+      } catch (fileError) {
+        console.error('خطأ في استخدام JSON credentials:', parseError.message);
+        console.error('خطأ في استخدام ملف JSON:', fileError.message);
+        throw new Error(`تعذر تحميل JSON credentials: ${parseError.message}`);
+      }
     }
   }
   
-  throw new Error('ملف JSON غير محدد. يرجى تعيين GOOGLE_APPLICATION_CREDENTIALS');
+  throw new Error('JSON credentials غير محدد. يرجى تعيين GOOGLE_APPLICATION_CREDENTIALS');
 }
 
 export function getSheetsClient() {
