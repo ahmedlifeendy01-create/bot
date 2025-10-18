@@ -39,6 +39,31 @@ function getAuth() {
       } catch (fileError) {
         console.error('خطأ في استخدام JSON credentials:', parseError.message);
         console.error('خطأ في استخدام ملف JSON:', fileError.message);
+        
+        // محاولة استخدام متغيرات البيئة القديمة كخيار احتياطي
+        const email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
+        const privateKey = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY;
+        
+        if (email && privateKey) {
+          console.log('استخدام متغيرات البيئة القديمة كخيار احتياطي');
+          const auth = new google.auth.GoogleAuth({
+            credentials: {
+              type: 'service_account',
+              project_id: process.env.GOOGLE_PROJECT_ID || 'default-project',
+              private_key_id: 'default-key-id',
+              private_key: privateKey.replace(/\\n/g, '\n'),
+              client_email: email,
+              client_id: 'default-client-id',
+              auth_uri: 'https://accounts.google.com/o/oauth2/auth',
+              token_uri: 'https://oauth2.googleapis.com/token',
+              auth_provider_x509_cert_url: 'https://www.googleapis.com/oauth2/v1/certs',
+              client_x509_cert_url: `https://www.googleapis.com/robot/v1/metadata/x509/${email}`
+            },
+            scopes
+          });
+          return auth;
+        }
+        
         throw new Error(`تعذر تحميل JSON credentials: ${parseError.message}`);
       }
     }

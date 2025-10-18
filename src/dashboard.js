@@ -494,7 +494,7 @@ app.get('/', async (req, res) => {
       document.addEventListener('DOMContentLoaded', function() {
         const ctx = document.getElementById('votingChart');
         if (ctx) {
-          const centerStats = ${JSON.stringify(centerStats)};
+          const centerStats = ${JSON.stringify(centerStats || [])};
           
           new Chart(ctx, {
             type: 'doughnut',
