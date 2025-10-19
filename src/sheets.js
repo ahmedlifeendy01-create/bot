@@ -1,10 +1,8 @@
-process.env.TZ = "UTC";
-
 import { google } from 'googleapis';
 
 const REQUIRED_ENV = [
   'GOOGLE_SHEETS_SPREADSHEET_ID',
-  'GOOGLE_APPLICATION_CREDENTIALS'
+  'GOOGLE_CREDENTIALS'
 ];
 
 export function assertSheetsEnv() {
@@ -16,62 +14,56 @@ export function assertSheetsEnv() {
 
 function getAuth() {
   const scopes = ['https://www.googleapis.com/auth/spreadsheets'];
-  
-  // محاولة استخدام JSON string مباشرة من Environment Variable
-  const credentialsJson = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+
+  // نستخدم JSON string مباشرة من Environment Variable
+  const credentialsJson = process.env.GOOGLE_CREDENTIALS;
+
   if (credentialsJson && credentialsJson.trim() !== '') {
     try {
-      // محاولة تحليل JSON string
       const credentials = JSON.parse(credentialsJson);
-      console.log('استخدام JSON credentials من Environment Variable');
-      const auth = new google.auth.GoogleAuth({ 
+      console.log('✅ تم استخدام GOOGLE_CREDENTIALS من متغير البيئة');
+      const auth = new google.auth.GoogleAuth({
         credentials,
-        scopes 
+        scopes
       });
       return auth;
     } catch (parseError) {
-      console.log('محاولة استخدام ملف JSON:', credentialsJson);
-      // إذا فشل التحليل، جرب كملف
-      try {
-        const auth = new google.auth.GoogleAuth({ 
-          keyFile: credentialsJson, 
-          scopes 
-        });
-        return auth;
-      } catch (fileError) {
-        console.error('خطأ في استخدام JSON credentials:', parseError.message);
-        console.error('خطأ في استخدام ملف JSON:', fileError.message);
-        
-        // محاولة استخدام متغيرات البيئة القديمة كخيار احتياطي
-        const email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
-        const privateKey = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY;
-        
-        if (email && privateKey) {
-          console.log('استخدام متغيرات البيئة القديمة كخيار احتياطي');
-          const auth = new google.auth.GoogleAuth({
-            credentials: {
-              type: 'service_account',
-              project_id: process.env.GOOGLE_PROJECT_ID || 'default-project',
-              private_key_id: 'default-key-id',
-              private_key: privateKey.replace(/\\n/g, '\n'),
-              client_email: email,
-              client_id: 'default-client-id',
-              auth_uri: 'https://accounts.google.com/o/oauth2/auth',
-              token_uri: 'https://oauth2.googleapis.com/token',
-              auth_provider_x509_cert_url: 'https://www.googleapis.com/oauth2/v1/certs',
-              client_x509_cert_url: `https://www.googleapis.com/robot/v1/metadata/x509/${email}`
-            },
-            scopes
-          });
-          return auth;
-        }
-        
-        throw new Error(`تعذر تحميل JSON credentials: ${parseError.message}`);
-      }
+      console.error('❌ خطأ في تحليل GOOGLE_CREDENTIALS:', parseError.message);
     }
   }
-  
-  throw new Error('JSON credentials غير محدد. يرجى تعيين GOOGLE_APPLICATION_CREDENTIALS');
+
+  // fallback (لو محدد ملف أو مفاتيح منفصلة)
+  const keyFile = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+  if (keyFile && keyFile.endsWith('.json')) {
+    console.log('📄 استخدام ملف GOOGLE_APPLICATION_CREDENTIALS:', keyFile);
+    return new google.auth.GoogleAuth({ keyFile, scopes });
+  }
+
+  // fallback أخير - المفاتيح المفصولة
+  const email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
+  const privateKey = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY;
+
+  if (email && privateKey) {
+    console.log('⚙️ استخدام GOOGLE_SERVICE_ACCOUNT_EMAIL و GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY');
+    const auth = new google.auth.GoogleAuth({
+      credentials: {
+        type: 'service_account',
+        project_id: process.env.GOOGLE_PROJECT_ID || 'default-project',
+        private_key_id: 'default-key-id',
+        private_key: privateKey.replace(/\\n/g, '\n'),
+        client_email: email,
+        client_id: 'default-client-id',
+        auth_uri: 'https://accounts.google.com/o/oauth2/auth',
+        token_uri: 'https://oauth2.googleapis.com/token',
+        auth_provider_x509_cert_url: 'https://www.googleapis.com/oauth2/v1/certs',
+        client_x509_cert_url: `https://www.googleapis.com/robot/v1/metadata/x509/${email}`
+      },
+      scopes
+    });
+    return auth;
+  }
+
+  throw new Error('❌ لا يمكن تحميل بيانات Google Auth. تأكد من تعيين GOOGLE_CREDENTIALS أو المفاتيح المطلوبة.');
 }
 
 export function getSheetsClient() {
@@ -119,13 +111,7 @@ export async function appendRows(range, values) {
   });
 }
 
-// Data schema (Sheets tabs):
-// Settings: key, value
-// Delegates: userId, name, center, village, supervisorId
-// Supervisors: userId, name, center
-// Voters_*: name, nationalId, rollNumber, center, village, status (optional)
-// Votes: timestamp, delegateUserId, voterNationalId, status (VOTED|NOT_VOTED|INVALID), center, village
-
+// Data schema
 export async function readKeyValueSettings() {
   const rows = await readRange('Settings!A:B');
   const map = new Map();
@@ -243,8 +229,6 @@ function indexHeader(header = [], keys = []) {
   return map;
 }
 
-// Read-only voters list (pre-uploaded once)
-// Expected columns in Voters sheet: name, nationalId, rollNumber, center, village
 export async function listVoters() {
   const rows = await readRange('Voters!A:E');
   const [header, ...data] = rows;
@@ -257,5 +241,3 @@ export async function listVoters() {
     village: r[idx.village] || ''
   }));
 }
-
-
