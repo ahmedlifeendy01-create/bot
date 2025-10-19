@@ -1,3 +1,5 @@
+process.env.TZ = "UTC";
+
 import { google } from 'googleapis';
 
 const REQUIRED_ENV = [
