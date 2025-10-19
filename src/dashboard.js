@@ -171,6 +171,21 @@ app.get('/', async (req, res) => {
   
   const filteredTotals = computeStats(filteredVotes, filteredVoters);
 
+  // إنشاء إحصائيات المراكز للرسم البياني
+  const centerStats = CENTERS.map(center => ({
+    center,
+    totalVoted: filteredTotals.centers[center]?.totalVoted || 0,
+    totalVoters: filteredTotals.centers[center]?.totalVoters || 0
+  }));
+
+  // متغيرات الإحصائيات للعرض
+  const stats = {
+    totalVoters: filteredTotals.overall.totalVoters,
+    totalVoted: filteredTotals.overall.totalVoted,
+    remaining: filteredTotals.overall.remaining,
+    progressPercent: filteredTotals.overall.progressPercent
+  };
+
   res.send(`<!doctype html>
   <html lang="ar" dir="rtl">
   <head>
@@ -948,9 +963,9 @@ app.get('/export/supervisor/:userId.csv', async (req, res) => {
   res.send('\uFEFF' + rows.join('\n'));
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Dashboard running on http://localhost:${PORT}`);
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Dashboard running on http://0.0.0.0:${PORT}`);
 });
 
 
