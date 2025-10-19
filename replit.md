@@ -55,6 +55,10 @@ The system expects the following sheets in the spreadsheet:
 - **2025-10-19**: Imported from GitHub and configured for Replit environment
   - Updated server to bind to 0.0.0.0:5000 for Replit proxy compatibility
   - Changed default PORT from 3000 to 5000
+  - Configured Replit Secrets for GOOGLE_CREDENTIALS and PORT
+  - Removed old .env file to prevent conflicts with Replit Secrets
+  - Fixed centerStats undefined bug in dashboard.js
+  - Set up Dashboard workflow on port 5000
   - Created replit.md documentation
 
 ## User Preferences
