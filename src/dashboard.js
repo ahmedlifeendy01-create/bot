@@ -285,7 +285,7 @@ app.get('/setup-help', (req, res) => {
 });
 
 
-app.get('/debug/sheets', async (req, res) => {
+app.get('/debug/sheets', requireAuth, async (req, res) => {
   try {
     const delegates = await listDelegates();
     const supervisors = await listSupervisors();
@@ -305,8 +305,14 @@ app.get('/debug/sheets', async (req, res) => {
 });
 
 // تنظيف بيانات الدخول من أي مسافات أو أحرف غير مرئية
-const ADMIN_USER = (process.env.DASHBOARD_USER || 'admin').trim();
-const ADMIN_PASS = (process.env.DASHBOARD_PASS || 'admin').trim();
+const ADMIN_USER = process.env.DASHBOARD_USER?.trim();
+const ADMIN_PASS = process.env.DASHBOARD_PASS?.trim();
+
+if (!ADMIN_USER || !ADMIN_PASS) {
+  console.error('❌ DASHBOARD_USER and DASHBOARD_PASS are required but not set!');
+  console.error('Please set DASHBOARD_USER and DASHBOARD_PASS in Replit Secrets.');
+  process.exit(1);
+}
 
 console.log('Dashboard Auth configured');
 
