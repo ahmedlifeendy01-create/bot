@@ -326,7 +326,9 @@ app.get('/login', (req, res) => {
         
         body {
           font-family: 'Cairo', sans-serif;
-          background: url('/images/campaign-background.jpg') center center / cover no-repeat fixed;
+          background: url('/images/campaign-background.jpg') center center / contain no-repeat fixed;
+          background-size: auto 100%;
+          background-color: #f1f5f9;
           min-height: 100vh;
           display: flex;
           align-items: center;
@@ -820,7 +822,9 @@ app.get('/', requireAuth, async (req, res) => {
     
     body {
       font-family: 'Cairo', sans-serif;
-      background: url('/images/campaign-background.jpg') center center / cover no-repeat fixed;
+      background: url('/images/campaign-background.jpg') center center no-repeat fixed;
+      background-size: contain;
+      background-color: #f1f5f9;
       color: var(--text);
       line-height: 1.6;
       position: relative;
