@@ -79,19 +79,29 @@ app.get('/debug/sheets', async (req, res) => {
   }
 });
 
-const ADMIN_USER = process.env.DASHBOARD_USER || 'admin';
-const ADMIN_PASS = process.env.DASHBOARD_PASS || 'admin';
+// تنظيف بيانات الدخول من أي مسافات أو أحرف غير مرئية
+const ADMIN_USER = (process.env.DASHBOARD_USER || 'admin').trim();
+const ADMIN_PASS = (process.env.DASHBOARD_PASS || 'admin').trim();
 
-console.log('Dashboard Auth configured');
+console.log('Dashboard Auth configured - Username length:', ADMIN_USER.length);
 
 app.use(basicAuth({ 
   users: { [ADMIN_USER]: ADMIN_PASS }, 
   challenge: true,
   realm: 'Dashboard Access',
   authorizer: (username, password) => {
-    const userMatches = basicAuth.safeCompare(username, ADMIN_USER);
-    const passwordMatches = basicAuth.safeCompare(password, ADMIN_PASS);
-    console.log('Auth attempt - User match:', userMatches, 'Pass match:', passwordMatches);
+    // تنظيف المدخلات من المسافات الزائدة
+    const cleanUsername = username.trim();
+    const cleanPassword = password.trim();
+    
+    const userMatches = basicAuth.safeCompare(cleanUsername, ADMIN_USER);
+    const passwordMatches = basicAuth.safeCompare(cleanPassword, ADMIN_PASS);
+    
+    if (!userMatches || !passwordMatches) {
+      console.log('Auth failed - Username entered length:', cleanUsername.length, 'Expected:', ADMIN_USER.length);
+      console.log('Password entered length:', cleanPassword.length, 'Expected:', ADMIN_PASS.length);
+    }
+    
     return userMatches && passwordMatches;
   },
   authorizeAsync: false
