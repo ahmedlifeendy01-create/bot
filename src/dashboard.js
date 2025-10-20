@@ -8,6 +8,10 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 const app = express();
+
+// Trust proxy - مهم جداً لـ Render و Heroku وغيرها
+app.set('trust proxy', 1);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -26,7 +30,7 @@ app.use(session({
   cookie: { 
     secure: process.env.NODE_ENV === 'production',
     httpOnly: true,
-    sameSite: 'strict',
+    sameSite: 'lax', // تغيير من strict إلى lax لتوافق أفضل مع Render
     maxAge: 24 * 60 * 60 * 1000
   }
 }));
