@@ -25,6 +25,40 @@ app.get('/health', (req, res) => {
   res.json({ ok: true, uptime: process.uptime() });
 });
 
+app.get('/check-credentials', (req, res) => {
+  const user = process.env.DASHBOARD_USER || 'admin';
+  const pass = process.env.DASHBOARD_PASS || 'admin';
+  res.send(`
+    <html dir="rtl">
+    <head>
+      <meta charset="UTF-8">
+      <style>
+        body { font-family: Arial; padding: 20px; background: #f5f5f5; }
+        .box { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; }
+        code { background: #e0e0e0; padding: 2px 8px; border-radius: 4px; font-family: monospace; }
+      </style>
+    </head>
+    <body>
+      <h1>معلومات تسجيل الدخول</h1>
+      <div class="box">
+        <h3>اسم المستخدم:</h3>
+        <p><code>${user}</code></p>
+        <p>الطول: ${user.length} حرف</p>
+      </div>
+      <div class="box">
+        <h3>كلمة المرور:</h3>
+        <p><code>${pass}</code></p>
+        <p>الطول: ${pass.length} حرف</p>
+      </div>
+      <div class="box">
+        <p><strong>ملاحظة:</strong> استخدم هذه القيم بالضبط كما هي موضحة أعلاه</p>
+        <p><a href="/">الذهاب لصفحة تسجيل الدخول</a></p>
+      </div>
+    </body>
+    </html>
+  `);
+});
+
 
 app.get('/debug/sheets', async (req, res) => {
   try {
