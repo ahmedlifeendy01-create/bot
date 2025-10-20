@@ -53,7 +53,14 @@ console.log('Dashboard Auth configured');
 app.use(basicAuth({ 
   users: { [ADMIN_USER]: ADMIN_PASS }, 
   challenge: true,
-  realm: 'Dashboard Access'
+  realm: 'Dashboard Access',
+  authorizer: (username, password) => {
+    const userMatches = basicAuth.safeCompare(username, ADMIN_USER);
+    const passwordMatches = basicAuth.safeCompare(password, ADMIN_PASS);
+    console.log('Auth attempt - User match:', userMatches, 'Pass match:', passwordMatches);
+    return userMatches && passwordMatches;
+  },
+  authorizeAsync: false
 }));
 
 const CENTERS = ['طما', 'طهطا', 'جهينه'];
