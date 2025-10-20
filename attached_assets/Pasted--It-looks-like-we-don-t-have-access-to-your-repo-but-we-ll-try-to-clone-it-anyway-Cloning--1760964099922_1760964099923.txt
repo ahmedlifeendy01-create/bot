@@ -1,0 +1,39 @@
+==> It looks like we don't have access to your repo, but we'll try to clone it anyway.
+==> Cloning from https://github.com/ahmedlifeendy01-create/bot
+==> Checking out commit 1d6ff980d76cb957e4523403baf5ebd0bd2e5a59 in branch main
+==> Using Node.js version 22.16.0 (default)
+==> Docs on specifying a Node.js version: https://render.com/docs/node-version
+==> Running build command 'npm install'...
+up to date, audited 280 packages in 12s
+83 packages are looking for funding
+  run `npm fund` for details
+1 high severity vulnerability
+Some issues need review, and may require choosing
+a different dependency.
+Run `npm audit` for details.
+==> Uploading build...
+==> Uploaded in 4.6s. Compression took 2.1s
+==> Build successful 🎉
+==> Deploying...
+==> Running 'npm start & npm run bot'
+> telegram-voting-bot-dashboard@1.0.0 start
+> node src/dashboard.js
+> telegram-voting-bot-dashboard@1.0.0 bot
+> node src/bot.js
+Warning: connect.session() MemoryStore is not
+designed for a production environment, as it will leak
+memory, and will not scale past a single process.
+Dashboard Auth configured
+Dashboard running on http://0.0.0.0:5000
+Telegram bot running...
+==> Your service is live 🎉
+==> 
+==> ///////////////////////////////////////////////////////////
+==> 
+==> Available at your primary URL https://bot-frtc.onrender.com
+==> 
+==> ///////////////////////////////////////////////////////////
+error: [polling_error] {"code":"ETELEGRAM","message":"ETELEGRAM: 409 Conflict: terminated by other getUpdates request; make sure that only one bot instance is running"}
+error: [polling_error] {"code":"ETELEGRAM","message":"ETELEGRAM: 409 Conflict: terminated by other getUpdates request; make sure that only one bot instance is running"}
+error: [polling_error] {"code":"ETELEGRAM","message":"ETELEGRAM: 409 Conflict: terminated by other getUpdates request; make sure that only one bot instance is running"}
+error: [polling_error] {"code":"ETELEGRAM","message":"ETELEGRAM: 409 Conflict: terminated by other getUpdates request; make sure that only one bot instance is running"}
