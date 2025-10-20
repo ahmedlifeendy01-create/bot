@@ -1,7 +1,7 @@
 import dotenv from 'dotenv';
 dotenv.config();
 import express from 'express';
-import basicAuth from 'express-basic-auth';
+import session from 'express-session';
 import { readKeyValueSettings, setKeyValueSetting, listDelegates, deleteDelegateByUserId, listSupervisors, deleteSupervisorByUserId, listVotes, addDelegate, addSupervisor, listVoters } from './sheets.js';
 import { readRange } from './sheets.js';
 import path from 'path';
@@ -10,6 +10,14 @@ import { fileURLToPath } from 'url';
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Session setup
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'voting-dashboard-secret-key-2025',
+  resave: false,
+  saveUninitialized: false,
+  cookie: { secure: false, maxAge: 24 * 60 * 60 * 1000 } // 24 hours
+}));
 
 // Serve static files
 const __filename = fileURLToPath(import.meta.url);
@@ -83,29 +91,215 @@ app.get('/debug/sheets', async (req, res) => {
 const ADMIN_USER = (process.env.DASHBOARD_USER || 'admin').trim();
 const ADMIN_PASS = (process.env.DASHBOARD_PASS || 'admin').trim();
 
-console.log('Dashboard Auth configured - Username length:', ADMIN_USER.length);
+console.log('Dashboard Auth configured');
 
-app.use(basicAuth({ 
-  users: { [ADMIN_USER]: ADMIN_PASS }, 
-  challenge: true,
-  realm: 'Dashboard Access',
-  authorizer: (username, password) => {
-    // تنظيف المدخلات من المسافات الزائدة
-    const cleanUsername = username.trim();
-    const cleanPassword = password.trim();
-    
-    const userMatches = basicAuth.safeCompare(cleanUsername, ADMIN_USER);
-    const passwordMatches = basicAuth.safeCompare(cleanPassword, ADMIN_PASS);
-    
-    if (!userMatches || !passwordMatches) {
-      console.log('Auth failed - Username entered length:', cleanUsername.length, 'Expected:', ADMIN_USER.length);
-      console.log('Password entered length:', cleanPassword.length, 'Expected:', ADMIN_PASS.length);
-    }
-    
-    return userMatches && passwordMatches;
-  },
-  authorizeAsync: false
-}));
+// Middleware للتحقق من تسجيل الدخول
+function requireAuth(req, res, next) {
+  if (req.session && req.session.authenticated) {
+    return next();
+  }
+  res.redirect('/login');
+}
+
+// صفحة تسجيل الدخول
+app.get('/login', (req, res) => {
+  const error = req.query.error;
+  res.send(`
+    <!DOCTYPE html>
+    <html dir="rtl">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>تسجيل الدخول - لوحة تحكم التصويت</title>
+      <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          min-height: 100vh;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 20px;
+        }
+        .login-container {
+          background: white;
+          padding: 40px;
+          border-radius: 15px;
+          box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+          width: 100%;
+          max-width: 450px;
+        }
+        h1 {
+          text-align: center;
+          color: #333;
+          margin-bottom: 10px;
+          font-size: 28px;
+        }
+        .subtitle {
+          text-align: center;
+          color: #666;
+          margin-bottom: 30px;
+          font-size: 14px;
+        }
+        .form-group {
+          margin-bottom: 25px;
+        }
+        label {
+          display: block;
+          margin-bottom: 8px;
+          color: #555;
+          font-weight: 600;
+          font-size: 14px;
+        }
+        .hint {
+          font-size: 12px;
+          color: #888;
+          font-weight: normal;
+          margin-right: 5px;
+        }
+        input {
+          width: 100%;
+          padding: 14px;
+          border: 2px solid #e0e0e0;
+          border-radius: 8px;
+          font-size: 16px;
+          transition: border-color 0.3s;
+          font-family: monospace;
+        }
+        input:focus {
+          outline: none;
+          border-color: #667eea;
+        }
+        .error-message {
+          background: #ffebee;
+          color: #c62828;
+          padding: 12px;
+          border-radius: 8px;
+          margin-bottom: 20px;
+          font-size: 14px;
+          text-align: center;
+          border: 1px solid #ef9a9a;
+        }
+        button {
+          width: 100%;
+          padding: 15px;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: white;
+          border: none;
+          border-radius: 8px;
+          font-size: 18px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: transform 0.2s, box-shadow 0.2s;
+        }
+        button:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        button:active {
+          transform: translateY(0);
+        }
+        .credentials-box {
+          background: #f5f5f5;
+          padding: 15px;
+          border-radius: 8px;
+          margin-bottom: 25px;
+          border-right: 4px solid #667eea;
+        }
+        .credentials-box h3 {
+          font-size: 14px;
+          color: #667eea;
+          margin-bottom: 10px;
+        }
+        .credentials-box p {
+          font-size: 13px;
+          color: #666;
+          line-height: 1.6;
+        }
+        .credentials-box code {
+          background: white;
+          padding: 4px 8px;
+          border-radius: 4px;
+          font-family: monospace;
+          color: #333;
+          display: inline-block;
+          margin: 2px 0;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="login-container">
+        <h1>🗳️ لوحة تحكم التصويت</h1>
+        <p class="subtitle">النائب علاء سليمان الحديوي</p>
+        
+        ${error ? '<div class="error-message">⚠️ بيانات الدخول غير صحيحة. يرجى المحاولة مرة أخرى.</div>' : ''}
+        
+        <div class="credentials-box">
+          <h3>📌 بيانات الدخول المطلوبة:</h3>
+          <p><strong>اسم المستخدم:</strong> <code>${ADMIN_USER}</code></p>
+          <p><strong>كلمة المرور:</strong> <code>${ADMIN_PASS}</code></p>
+        </div>
+        
+        <form method="POST" action="/login">
+          <div class="form-group">
+            <label>
+              اسم المستخدم
+              <span class="hint">(انسخ من الأعلى)</span>
+            </label>
+            <input 
+              type="text" 
+              name="username" 
+              required 
+              autocomplete="off"
+              placeholder="الصق اسم المستخدم هنا"
+            >
+          </div>
+          
+          <div class="form-group">
+            <label>
+              كلمة المرور
+              <span class="hint">(انسخ من الأعلى)</span>
+            </label>
+            <input 
+              type="password" 
+              name="password" 
+              required 
+              autocomplete="off"
+              placeholder="الصق كلمة المرور هنا"
+            >
+          </div>
+          
+          <button type="submit">تسجيل الدخول</button>
+        </form>
+      </div>
+    </body>
+    </html>
+  `);
+});
+
+// معالجة تسجيل الدخول
+app.post('/login', (req, res) => {
+  const { username, password } = req.body;
+  const cleanUsername = (username || '').trim();
+  const cleanPassword = (password || '').trim();
+  
+  if (cleanUsername === ADMIN_USER && cleanPassword === ADMIN_PASS) {
+    req.session.authenticated = true;
+    req.session.username = cleanUsername;
+    console.log('Login successful');
+    res.redirect('/');
+  } else {
+    console.log('Login failed - Username match:', cleanUsername === ADMIN_USER, 'Password match:', cleanPassword === ADMIN_PASS);
+    res.redirect('/login?error=1');
+  }
+});
+
+// تسجيل الخروج
+app.get('/logout', (req, res) => {
+  req.session.destroy();
+  res.redirect('/login');
+});
 
 const CENTERS = ['طما', 'طهطا', 'جهينه'];
 
@@ -164,7 +358,7 @@ function computeDelegateBreakdown(votes, delegates) {
   return Array.from(byDelegate.values());
 }
 
-app.get('/', async (req, res) => {
+app.get('/', requireAuth, async (req, res) => {
   let settings = new Map(); let delegates = []; let supervisors = []; let votes = []; let allVoters = []; let totals = { overall: { total: 0, voted: 0, not: 0, invalid: 0 }, centers: {} };
   let loadError = '';
   const { error, success } = req.query;
@@ -836,7 +1030,7 @@ app.get('/', async (req, res) => {
   </html>`);
 });
 
-app.post('/delegates/add', async (req, res) => {
+app.post('/delegates/add', requireAuth, async (req, res) => {
   const { userId, name, center, village, supervisorId } = req.body || {};
   
   if (!userId || !name || !center || !village) {
@@ -859,13 +1053,13 @@ app.post('/delegates/add', async (req, res) => {
   }
 });
 
-app.post('/delegates/delete', async (req, res) => {
+app.post('/delegates/delete', requireAuth, async (req, res) => {
   const userId = (req.body || {}).userId;
   if (userId) await deleteDelegateByUserId(userId);
   res.redirect('/');
 });
 
-app.post('/supervisors/add', async (req, res) => {
+app.post('/supervisors/add', requireAuth, async (req, res) => {
   const { userId, name, center } = req.body || {};
   
   if (!userId || !name || !center) {
@@ -888,13 +1082,13 @@ app.post('/supervisors/add', async (req, res) => {
   }
 });
 
-app.post('/supervisors/delete', async (req, res) => {
+app.post('/supervisors/delete', requireAuth, async (req, res) => {
   const userId = (req.body || {}).userId;
   if (userId) await deleteSupervisorByUserId(userId);
   res.redirect('/');
 });
 
-app.post('/settings/save', async (req, res) => {
+app.post('/settings/save', requireAuth, async (req, res) => {
   const body = req.body || {};
   if (typeof body.TELEGRAM_BOT_TOKEN === 'string') {
     await setKeyValueSetting('TELEGRAM_BOT_TOKEN', body.TELEGRAM_BOT_TOKEN);
@@ -905,7 +1099,7 @@ app.post('/settings/save', async (req, res) => {
   res.redirect('/');
 });
 
-app.get('/supervisors/:userId', async (req, res) => {
+app.get('/supervisors/:userId', requireAuth, async (req, res) => {
   const userId = req.params.userId;
   const supervisors = await listSupervisors();
   const supervisor = supervisors.find(s => s.userId === userId);
@@ -972,7 +1166,7 @@ function toCsvRow(fields) {
   }).join(',');
 }
 
-app.get('/export/votes.csv', async (req, res) => {
+app.get('/export/votes.csv', requireAuth, async (req, res) => {
   const votes = await listVotes();
   const filterCenter = req.query.center || '';
   const filterSupervisor = req.query.supervisor || '';
@@ -995,7 +1189,7 @@ app.get('/export/votes.csv', async (req, res) => {
   res.send('\uFEFF' + rows.join('\n'));
 });
 
-app.get('/export/supervisor/:userId.csv', async (req, res) => {
+app.get('/export/supervisor/:userId.csv', requireAuth, async (req, res) => {
   const userId = req.params.userId;
   const delegates = (await listDelegates()).filter(d => d.supervisorId === userId);
   const votes = (await listVotes()).filter(v => delegates.some(d => d.userId === v.delegateUserId));
