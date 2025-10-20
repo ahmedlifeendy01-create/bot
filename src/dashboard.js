@@ -12,11 +12,23 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Session setup
+const SESSION_SECRET = process.env.SESSION_SECRET;
+if (!SESSION_SECRET) {
+  console.error('❌ SESSION_SECRET is required but not set in environment variables!');
+  console.error('Please set SESSION_SECRET in Replit Secrets for secure session management.');
+  process.exit(1);
+}
+
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'voting-dashboard-secret-key-2025',
+  secret: SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
-  cookie: { secure: false, maxAge: 24 * 60 * 60 * 1000 } // 24 hours
+  cookie: { 
+    secure: process.env.NODE_ENV === 'production', // HTTPS only in production
+    httpOnly: true, // Prevent XSS attacks
+    sameSite: 'strict', // CSRF protection
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  }
 }));
 
 // Serve static files
@@ -33,34 +45,239 @@ app.get('/health', (req, res) => {
   res.json({ ok: true, uptime: process.uptime() });
 });
 
-app.get('/check-credentials', (req, res) => {
-  const user = process.env.DASHBOARD_USER || 'admin';
-  const pass = process.env.DASHBOARD_PASS || 'admin';
+// صفحة مساعدة إعداد Google Sheets
+app.get('/setup-help', (req, res) => {
   res.send(`
+    <!DOCTYPE html>
     <html dir="rtl">
     <head>
       <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>دليل إعداد Google Sheets</title>
       <style>
-        body { font-family: Arial; padding: 20px; background: #f5f5f5; }
-        .box { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; }
-        code { background: #e0e0e0; padding: 2px 8px; border-radius: 4px; font-family: monospace; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          background: #f5f7fa;
+          padding: 20px;
+          line-height: 1.8;
+        }
+        .container {
+          max-width: 900px;
+          margin: 0 auto;
+          background: white;
+          padding: 40px;
+          border-radius: 15px;
+          box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        h1 {
+          color: #2c3e50;
+          border-bottom: 3px solid #667eea;
+          padding-bottom: 15px;
+          margin-bottom: 30px;
+        }
+        h2 {
+          color: #667eea;
+          margin-top: 30px;
+          margin-bottom: 15px;
+          font-size: 22px;
+        }
+        h3 {
+          color: #555;
+          margin-top: 20px;
+          margin-bottom: 10px;
+        }
+        .step {
+          background: #f8f9fa;
+          padding: 20px;
+          border-right: 4px solid #667eea;
+          margin-bottom: 20px;
+          border-radius: 8px;
+        }
+        .warning {
+          background: #fff3cd;
+          border-right: 4px solid #ffc107;
+          padding: 15px;
+          margin: 20px 0;
+          border-radius: 8px;
+        }
+        .error {
+          background: #f8d7da;
+          border-right: 4px solid #dc3545;
+          padding: 15px;
+          margin: 20px 0;
+          border-radius: 8px;
+        }
+        code {
+          background: #e9ecef;
+          padding: 3px 8px;
+          border-radius: 4px;
+          font-family: 'Courier New', monospace;
+          font-size: 14px;
+        }
+        pre {
+          background: #2d3748;
+          color: #e2e8f0;
+          padding: 20px;
+          border-radius: 8px;
+          overflow-x: auto;
+          margin: 15px 0;
+        }
+        ul, ol {
+          margin-right: 30px;
+          margin-bottom: 15px;
+        }
+        li {
+          margin-bottom: 10px;
+        }
+        .btn {
+          display: inline-block;
+          background: #667eea;
+          color: white;
+          padding: 12px 30px;
+          border-radius: 8px;
+          text-decoration: none;
+          margin-top: 20px;
+          transition: background 0.3s;
+        }
+        .btn:hover {
+          background: #5568d3;
+        }
+        table {
+          width: 100%;
+          border-collapse: collapse;
+          margin: 20px 0;
+        }
+        th, td {
+          border: 1px solid #dee2e6;
+          padding: 12px;
+          text-align: right;
+        }
+        th {
+          background: #667eea;
+          color: white;
+        }
+        tr:nth-child(even) {
+          background: #f8f9fa;
+        }
       </style>
     </head>
     <body>
-      <h1>معلومات تسجيل الدخول</h1>
-      <div class="box">
-        <h3>اسم المستخدم:</h3>
-        <p><code>${user}</code></p>
-        <p>الطول: ${user.length} حرف</p>
-      </div>
-      <div class="box">
-        <h3>كلمة المرور:</h3>
-        <p><code>${pass}</code></p>
-        <p>الطول: ${pass.length} حرف</p>
-      </div>
-      <div class="box">
-        <p><strong>ملاحظة:</strong> استخدم هذه القيم بالضبط كما هي موضحة أعلاه</p>
-        <p><a href="/">الذهاب لصفحة تسجيل الدخول</a></p>
+      <div class="container">
+        <h1>📚 دليل إعداد لوحة تحكم التصويت</h1>
+        
+        <div class="error">
+          <h3>⚠️ مشكلة الاتصال بـ Google Sheets</h3>
+          <p>إذا ظهرت لك رسالة "Invalid JWT Signature" أو "تعذر الاتصال بـ Google Sheets"، فهذا يعني أن بيانات الاعتماد لـ Google غير صحيحة.</p>
+        </div>
+
+        <h2>📋 الخطوات المطلوبة:</h2>
+
+        <div class="step">
+          <h3>1️⃣ إنشاء Service Account في Google Cloud</h3>
+          <ol>
+            <li>اذهب إلى <a href="https://console.cloud.google.com" target="_blank">Google Cloud Console</a></li>
+            <li>أنشئ مشروع جديد أو اختر مشروع موجود</li>
+            <li>من القائمة الجانبية، اختر "IAM & Admin" ثم "Service Accounts"</li>
+            <li>اضغط "Create Service Account"</li>
+            <li>أدخل اسم الحساب (مثل: voting-bot-service)</li>
+            <li>اضغط "Create and Continue"</li>
+            <li>أعطه دور "Editor" أو "Owner"</li>
+            <li>اضغط "Done"</li>
+          </ol>
+        </div>
+
+        <div class="step">
+          <h3>2️⃣ إنشاء مفتاح JSON</h3>
+          <ol>
+            <li>اضغط على Service Account الذي أنشأته</li>
+            <li>اذهب لتبويب "Keys"</li>
+            <li>اضغط "Add Key" ← "Create new key"</li>
+            <li>اختر "JSON"</li>
+            <li>اضغط "Create" - سيتم تحميل ملف JSON</li>
+            <li><strong>احتفظ بهذا الملف بأمان!</strong></li>
+          </ol>
+        </div>
+
+        <div class="step">
+          <h3>3️⃣ تفعيل Google Sheets API</h3>
+          <ol>
+            <li>في Google Cloud Console، اذهب إلى "APIs & Services" ← "Library"</li>
+            <li>ابحث عن "Google Sheets API"</li>
+            <li>اضغط عليه ثم اضغط "Enable"</li>
+          </ol>
+        </div>
+
+        <div class="step">
+          <h3>4️⃣ إعداد Google Sheets</h3>
+          <ol>
+            <li>أنشئ Google Sheet جديد</li>
+            <li>أنشئ الصفحات (Sheets) التالية بالضبط:</li>
+          </ol>
+          
+          <table>
+            <thead>
+              <tr>
+                <th>اسم الصفحة</th>
+                <th>الأعمدة المطلوبة</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Delegates</strong></td>
+                <td>userId | name | center | village | supervisorId</td>
+              </tr>
+              <tr>
+                <td><strong>Supervisors</strong></td>
+                <td>userId | name | center</td>
+              </tr>
+              <tr>
+                <td><strong>Voters</strong></td>
+                <td>name | nationalId | rollNumber | center | village</td>
+              </tr>
+              <tr>
+                <td><strong>Votes</strong></td>
+                <td>timestamp | delegateUserId | voterNationalId | status | center | village</td>
+              </tr>
+              <tr>
+                <td><strong>Settings</strong></td>
+                <td>key | value</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <ol start="3">
+            <li>اضف الأعمدة في الصف الأول لكل صفحة</li>
+            <li>شارك الملف مع البريد الإلكتروني للـ Service Account:
+              <br>ستجده في ملف JSON تحت <code>"client_email"</code>
+              <br>أعطه صلاحية "Editor"
+            </li>
+          </ol>
+        </div>
+
+        <div class="step">
+          <h3>5️⃣ تحديث Replit Secrets</h3>
+          <ol>
+            <li>في Replit، افتح Tools ← Secrets</li>
+            <li>حدّث <code>GOOGLE_CREDENTIALS</code> بمحتوى ملف JSON <strong>كاملاً</strong></li>
+            <li>حدّث <code>GOOGLE_SHEETS_SPREADSHEET_ID</code> بـ ID الـ Spreadsheet:
+              <br>يمكن إيجاده في رابط Google Sheet:
+              <br><code>https://docs.google.com/spreadsheets/d/<strong>هنا_الـID</strong>/edit</code>
+            </li>
+          </ol>
+        </div>
+
+        <div class="warning">
+          <h3>⚡ نصائح هامة:</h3>
+          <ul>
+            <li>تأكد من نسخ ملف JSON <strong>كاملاً</strong> بدون تعديل</li>
+            <li>تأكد من مشاركة Google Sheet مع Service Account Email</li>
+            <li>تأكد من تفعيل Google Sheets API</li>
+            <li>تأكد من أن أسماء الصفحات بالإنجليزية بالضبط كما هي موضحة</li>
+          </ul>
+        </div>
+
+        <a href="/" class="btn">← العودة للوحة التحكم</a>
       </div>
     </body>
     </html>
@@ -152,12 +369,6 @@ app.get('/login', (req, res) => {
           font-weight: 600;
           font-size: 14px;
         }
-        .hint {
-          font-size: 12px;
-          color: #888;
-          font-weight: normal;
-          margin-right: 5px;
-        }
         input {
           width: 100%;
           padding: 14px;
@@ -165,7 +376,6 @@ app.get('/login', (req, res) => {
           border-radius: 8px;
           font-size: 16px;
           transition: border-color 0.3s;
-          font-family: monospace;
         }
         input:focus {
           outline: none;
@@ -200,31 +410,17 @@ app.get('/login', (req, res) => {
         button:active {
           transform: translateY(0);
         }
-        .credentials-box {
-          background: #f5f5f5;
+        .info-box {
+          background: #f0f9ff;
           padding: 15px;
           border-radius: 8px;
           margin-bottom: 25px;
-          border-right: 4px solid #667eea;
+          border-right: 4px solid #0284c7;
         }
-        .credentials-box h3 {
-          font-size: 14px;
-          color: #667eea;
-          margin-bottom: 10px;
-        }
-        .credentials-box p {
+        .info-box p {
           font-size: 13px;
-          color: #666;
+          color: #075985;
           line-height: 1.6;
-        }
-        .credentials-box code {
-          background: white;
-          padding: 4px 8px;
-          border-radius: 4px;
-          font-family: monospace;
-          color: #333;
-          display: inline-block;
-          margin: 2px 0;
         }
       </style>
     </head>
@@ -235,38 +431,30 @@ app.get('/login', (req, res) => {
         
         ${error ? '<div class="error-message">⚠️ بيانات الدخول غير صحيحة. يرجى المحاولة مرة أخرى.</div>' : ''}
         
-        <div class="credentials-box">
-          <h3>📌 بيانات الدخول المطلوبة:</h3>
-          <p><strong>اسم المستخدم:</strong> <code>${ADMIN_USER}</code></p>
-          <p><strong>كلمة المرور:</strong> <code>${ADMIN_PASS}</code></p>
+        <div class="info-box">
+          <p><strong>ℹ️ معلومة:</strong> استخدم بيانات الدخول التي قمت بإعدادها في Replit Secrets (DASHBOARD_USER و DASHBOARD_PASS)</p>
         </div>
         
         <form method="POST" action="/login">
           <div class="form-group">
-            <label>
-              اسم المستخدم
-              <span class="hint">(انسخ من الأعلى)</span>
-            </label>
+            <label>اسم المستخدم</label>
             <input 
               type="text" 
               name="username" 
               required 
-              autocomplete="off"
-              placeholder="الصق اسم المستخدم هنا"
+              autocomplete="username"
+              placeholder="أدخل اسم المستخدم"
             >
           </div>
           
           <div class="form-group">
-            <label>
-              كلمة المرور
-              <span class="hint">(انسخ من الأعلى)</span>
-            </label>
+            <label>كلمة المرور</label>
             <input 
               type="password" 
               name="password" 
               required 
-              autocomplete="off"
-              placeholder="الصق كلمة المرور هنا"
+              autocomplete="current-password"
+              placeholder="أدخل كلمة المرور"
             >
           </div>
           
@@ -371,7 +559,14 @@ app.get('/', requireAuth, async (req, res) => {
     allVoters = await listVoters();
     totals = computeStats(votes, allVoters);
   } catch (e) {
-    loadError = 'تعذر الاتصال بـ Google Sheets. يُفضّل استخدام Node 18 LTS أو ضبط NODE_OPTIONS=--openssl-legacy-provider.';
+    const errorMsg = e.message || String(e);
+    if (errorMsg.includes('Invalid JWT') || errorMsg.includes('invalid_grant')) {
+      loadError = '⚠️ خطأ في بيانات الاعتماد لـ Google Sheets. يرجى التحقق من إعدادات GOOGLE_CREDENTIALS.';
+    } else if (errorMsg.includes('ENOENT') || errorMsg.includes('not found')) {
+      loadError = '⚠️ لم يتم العثور على الصفحات المطلوبة في Google Sheets.';
+    } else {
+      loadError = `⚠️ تعذر الاتصال بـ Google Sheets: ${errorMsg}`;
+    }
     console.error('Sheets load error:', e);
   }
 
@@ -913,7 +1108,18 @@ app.get('/', requireAuth, async (req, res) => {
         </div>
         ` : ''}
       </div>
-      ${loadError ? `<div class=\"card\" style=\"margin-bottom:16px;color:#fecaca;background:#581c1c\">${loadError}</div>` : ''}
+      ${loadError ? `
+      <div class=\"card\" style=\"margin-bottom:16px;background:#fef2f2;border-right:4px solid #dc2626;color:#991b1b;padding:20px\">
+        <h3 style=\"color:#dc2626;margin-bottom:12px\">❌ خطأ في الاتصال بقاعدة البيانات</h3>
+        <p style=\"margin-bottom:12px\">${loadError}</p>
+        <a href=\"/setup-help\" style=\"display:inline-block;background:#dc2626;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;margin-top:8px\">
+          📖 دليل الإعداد والمساعدة
+        </a>
+        <a href=\"/logout\" style=\"display:inline-block;background:#6b7280;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;margin-top:8px;margin-right:10px\">
+          🚪 تسجيل الخروج
+        </a>
+      </div>
+      ` : ''}
       
       ${error === 'delegate_exists' ? `<div class=\"card\" style=\"margin-bottom:16px;color:#fecaca;background:#581c1c\">خطأ: المندوب بهذا User ID موجود بالفعل</div>` : ''}
       ${error === 'supervisor_exists' ? `<div class=\"card\" style=\"margin-bottom:16px;color:#fecaca;background:#581c1c\">خطأ: المشرف بهذا User ID موجود بالفعل</div>` : ''}
