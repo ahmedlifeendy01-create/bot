@@ -1504,113 +1504,113 @@ app.get('/', requireAuth, async (req, res) => {
       </form>
     </div>
     
-    <!-- Delegates & Supervisors Tables -->
-    <div class="grid-2" id="delegates">
-      <div class="card">
-        <h3>👥 المندوبون (${filteredDelegates.length})</h3>
-        <div style="overflow-x: auto;">
-          <table>
-            <thead>
+    <!-- Supervisors & Delegates Tables -->
+    <!-- جدول المشرفين -->
+    <div class="card" id="supervisors">
+      <h3>👔 المشرفون (${filteredSupervisors.length})</h3>
+      <div style="overflow-x: auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>الاسم</th>
+              <th>المركز</th>
+              <th>المندوبين</th>
+              <th>الناخبين</th>
+              <th>صوت صحيح</th>
+              <th>صوت باطل</th>
+              <th>لم يصوت</th>
+              <th>المتبقي</th>
+              <th>النسبة</th>
+              <th>إجراءات</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${filteredSupervisors.map(s => {
+              const sStats = supervisorStats.get(s.userId) || { totalVoters: 0, voted: 0, invalid: 0, notVoted: 0, remaining: 0, progressPercent: 0, delegatesCount: 0 };
+              return `
               <tr>
-                <th>الاسم</th>
-                <th>المركز</th>
-                <th>القرية</th>
-                <th>الناخبين</th>
-                <th>تم</th>
-                <th>باطل</th>
-                <th>لم يتم</th>
-                <th>المتبقي</th>
-                <th>النسبة</th>
-                <th>إجراءات</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${filteredDelegates.map(d => {
-                const dStats = delegateStats.get(d.userId) || { totalVoters: 0, voted: 0, invalid: 0, notVoted: 0, remaining: 0, progressPercent: 0 };
-                return `
-                <tr>
-                  <td><strong>${d.name}</strong><br><small style="color: #94a3b8;">${d.userId}</small></td>
-                  <td>${d.center}</td>
-                  <td>${d.village}</td>
-                  <td><strong style="color: #3b82f6;">${dStats.totalVoters}</strong></td>
-                  <td><span class="badge badge-success">${dStats.voted}</span></td>
-                  <td><span class="badge badge-danger">${dStats.invalid}</span></td>
-                  <td><span class="badge badge-warning">${dStats.notVoted}</span></td>
-                  <td><strong style="color: #f59e0b;">${dStats.remaining}</strong></td>
-                  <td>
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                      <div style="flex: 1; background: #e5e7eb; border-radius: 8px; height: 8px; overflow: hidden;">
-                        <div style="width: ${dStats.progressPercent}%; background: linear-gradient(90deg, #10b981, #059669); height: 100%; border-radius: 8px;"></div>
-                      </div>
-                      <strong style="color: #10b981; min-width: 40px;">${dStats.progressPercent}%</strong>
+                <td><strong>${s.name}</strong><br><small style="color: #94a3b8;">${s.userId}</small></td>
+                <td>${s.center}</td>
+                <td><span class="badge badge-info">${sStats.delegatesCount}</span></td>
+                <td><strong style="color: #3b82f6;">${sStats.totalVoters}</strong></td>
+                <td><span class="badge badge-success">${sStats.voted}</span></td>
+                <td><span class="badge badge-danger">${sStats.invalid}</span></td>
+                <td><span class="badge badge-warning">${sStats.notVoted}</span></td>
+                <td><strong style="color: #f59e0b;">${sStats.remaining}</strong></td>
+                <td>
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <div style="flex: 1; background: #e5e7eb; border-radius: 8px; height: 8px; overflow: hidden;">
+                      <div style="width: ${sStats.progressPercent}%; background: linear-gradient(90deg, #10b981, #059669); height: 100%; border-radius: 8px;"></div>
                     </div>
-                  </td>
-                  <td>
-                    <form method="post" action="/delegates/delete" style="display: inline;">
-                      <input type="hidden" name="userId" value="${d.userId}" />
-                      <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;" onclick="return confirm('هل تريد حذف ${d.name}؟')">حذف</button>
-                    </form>
-                  </td>
-                </tr>
-                `;
-              }).join('')}
-            </tbody>
-          </table>
-        </div>
+                    <strong style="color: #10b981; min-width: 40px;">${sStats.progressPercent}%</strong>
+                  </div>
+                </td>
+                <td>
+                  <a href="/supervisors/${encodeURIComponent(s.userId)}" class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px; margin-left: 5px;">تفاصيل</a>
+                  <form method="post" action="/supervisors/delete" style="display: inline;">
+                    <input type="hidden" name="userId" value="${s.userId}" />
+                    <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;" onclick="return confirm('هل تريد حذف ${s.name}؟')">حذف</button>
+                  </form>
+                </td>
+              </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
       </div>
-      
-      <div class="card" id="supervisors">
-        <h3>👔 المشرفون (${filteredSupervisors.length})</h3>
-        <div style="overflow-x: auto;">
-          <table>
-            <thead>
+    </div>
+    
+    <!-- جدول المندوبين -->
+    <div class="card" id="delegates">
+      <h3>👥 المندوبون (${filteredDelegates.length})</h3>
+      <div style="overflow-x: auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>الاسم</th>
+              <th>المركز</th>
+              <th>القرية</th>
+              <th>الناخبين</th>
+              <th>صوت صحيح</th>
+              <th>صوت باطل</th>
+              <th>لم يصوت</th>
+              <th>المتبقي</th>
+              <th>النسبة</th>
+              <th>إجراءات</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${filteredDelegates.map(d => {
+              const dStats = delegateStats.get(d.userId) || { totalVoters: 0, voted: 0, invalid: 0, notVoted: 0, remaining: 0, progressPercent: 0 };
+              return `
               <tr>
-                <th>الاسم</th>
-                <th>المركز</th>
-                <th>المندوبين</th>
-                <th>الناخبين</th>
-                <th>تم</th>
-                <th>باطل</th>
-                <th>لم يتم</th>
-                <th>المتبقي</th>
-                <th>النسبة</th>
-                <th>إجراءات</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${filteredSupervisors.map(s => {
-                const sStats = supervisorStats.get(s.userId) || { totalVoters: 0, voted: 0, invalid: 0, notVoted: 0, remaining: 0, progressPercent: 0, delegatesCount: 0 };
-                return `
-                <tr>
-                  <td><strong>${s.name}</strong><br><small style="color: #94a3b8;">${s.userId}</small></td>
-                  <td>${s.center}</td>
-                  <td><span class="badge badge-success">${sStats.delegatesCount}</span></td>
-                  <td><strong style="color: #3b82f6;">${sStats.totalVoters}</strong></td>
-                  <td><span class="badge badge-success">${sStats.voted}</span></td>
-                  <td><span class="badge badge-danger">${sStats.invalid}</span></td>
-                  <td><span class="badge badge-warning">${sStats.notVoted}</span></td>
-                  <td><strong style="color: #f59e0b;">${sStats.remaining}</strong></td>
-                  <td>
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                      <div style="flex: 1; background: #e5e7eb; border-radius: 8px; height: 8px; overflow: hidden;">
-                        <div style="width: ${sStats.progressPercent}%; background: linear-gradient(90deg, #10b981, #059669); height: 100%; border-radius: 8px;"></div>
-                      </div>
-                      <strong style="color: #10b981; min-width: 40px;">${sStats.progressPercent}%</strong>
+                <td><strong>${d.name}</strong><br><small style="color: #94a3b8;">${d.userId}</small></td>
+                <td>${d.center}</td>
+                <td>${d.village}</td>
+                <td><strong style="color: #3b82f6;">${dStats.totalVoters}</strong></td>
+                <td><span class="badge badge-success">${dStats.voted}</span></td>
+                <td><span class="badge badge-danger">${dStats.invalid}</span></td>
+                <td><span class="badge badge-warning">${dStats.notVoted}</span></td>
+                <td><strong style="color: #f59e0b;">${dStats.remaining}</strong></td>
+                <td>
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <div style="flex: 1; background: #e5e7eb; border-radius: 8px; height: 8px; overflow: hidden;">
+                      <div style="width: ${dStats.progressPercent}%; background: linear-gradient(90deg, #10b981, #059669); height: 100%; border-radius: 8px;"></div>
                     </div>
-                  </td>
-                  <td>
-                    <a href="/supervisors/${encodeURIComponent(s.userId)}" class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px; margin-left: 5px;">تفاصيل</a>
-                    <form method="post" action="/supervisors/delete" style="display: inline;">
-                      <input type="hidden" name="userId" value="${s.userId}" />
-                      <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;" onclick="return confirm('هل تريد حذف ${s.name}؟')">حذف</button>
-                    </form>
-                  </td>
-                </tr>
-                `;
-              }).join('')}
-            </tbody>
-          </table>
-        </div>
+                    <strong style="color: #10b981; min-width: 40px;">${dStats.progressPercent}%</strong>
+                  </div>
+                </td>
+                <td>
+                  <form method="post" action="/delegates/delete" style="display: inline;">
+                    <input type="hidden" name="userId" value="${d.userId}" />
+                    <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;" onclick="return confirm('هل تريد حذف ${d.name}؟')">حذف</button>
+                  </form>
+                </td>
+              </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
       </div>
     </div>
     
