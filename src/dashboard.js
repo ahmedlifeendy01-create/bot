@@ -529,10 +529,6 @@ app.get('/login', (req, res) => {
         
         ${error ? '<div class="error-message">⚠️ بيانات الدخول غير صحيحة. يرجى المحاولة مرة أخرى.</div>' : ''}
         
-        <div class="info-box">
-          <p><strong>ℹ️ معلومة:</strong> استخدم بيانات الدخول المحفوظة في Replit Secrets</p>
-        </div>
-        
         <form method="POST" action="/login">
           <div class="form-group">
             <label>اسم المستخدم</label>
