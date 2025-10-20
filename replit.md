@@ -52,6 +52,21 @@ The system expects the following sheets in the spreadsheet:
 - **Settings**: key-value pairs for configuration
 
 ## Recent Changes
+- **2025-10-20**: إعادة بناء لوحة التحكم بتصميم مؤسسي احترافي
+  - تصميم جديد كامل مع قائمة جانبية (Sidebar) ونظام تنقل احترافي
+  - صفحة تسجيل دخول محسّنة مع تأثيرات بصرية متقدمة
+  - بطاقات إحصائية تفاعلية مع أيقونات ملونة وتدرجات
+  - رسوم بيانية محسّنة باستخدام Chart.js
+  - جداول احترافية مع تصميم عصري
+  - نظام فلترة محسّن وسهل الاستخدام
+  - تصميم متجاوب (Responsive) للجوال والأجهزة اللوحية
+  - نظام ألوان CSS variables منظم ومتناسق
+  - تأثيرات Hover و Transitions سلسة
+  - إضافة Cache-Control headers لمنع التخزين المؤقت
+  - تحسينات أمنية: التحقق الإلزامي من SESSION_SECRET
+  - إضافة صفحة /setup-help لمساعدة المستخدمين
+  - حفظ جميع الوظائف الأساسية (CRUD، تصدير CSV، الفلاتر)
+
 - **2025-10-19**: Imported from GitHub and configured for Replit environment
   - Updated server to bind to 0.0.0.0:5000 for Replit proxy compatibility
   - Changed default PORT from 3000 to 5000
