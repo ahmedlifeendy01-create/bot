@@ -25,14 +25,6 @@ app.get('/health', (req, res) => {
   res.json({ ok: true, uptime: process.uptime() });
 });
 
-app.get('/auth-test', (req, res) => {
-  res.json({ 
-    user: ADMIN_USER, 
-    pass: ADMIN_PASS,
-    env_user: process.env.DASHBOARD_USER,
-    env_pass: process.env.DASHBOARD_PASS
-  });
-});
 
 app.get('/debug/sheets', async (req, res) => {
   try {
@@ -56,7 +48,7 @@ app.get('/debug/sheets', async (req, res) => {
 const ADMIN_USER = process.env.DASHBOARD_USER || 'admin';
 const ADMIN_PASS = process.env.DASHBOARD_PASS || 'admin';
 
-console.log('Dashboard Auth - User:', ADMIN_USER, 'Pass:', ADMIN_PASS);
+console.log('Dashboard Auth configured');
 
 app.use(basicAuth({ 
   users: { [ADMIN_USER]: ADMIN_PASS }, 
