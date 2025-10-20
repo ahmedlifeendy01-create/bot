@@ -326,7 +326,7 @@ app.get('/login', (req, res) => {
         
         body {
           font-family: 'Cairo', sans-serif;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          background: url('/images/campaign-background.jpg') center center / cover no-repeat fixed;
           min-height: 100vh;
           display: flex;
           align-items: center;
@@ -335,15 +335,15 @@ app.get('/login', (req, res) => {
           overflow: hidden;
         }
         
-        /* خلفية متحركة */
+        /* طبقة شفافة فوق الصورة */
         body::before {
           content: '';
-          position: absolute;
-          width: 200%;
-          height: 200%;
-          background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
-          background-size: 50px 50px;
-          animation: moveBackground 20s linear infinite;
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: rgba(0, 0, 0, 0.3);
           z-index: 0;
         }
         
@@ -353,15 +353,16 @@ app.get('/login', (req, res) => {
         }
         
         .login-container {
-          background: rgba(255, 255, 255, 0.95);
-          backdrop-filter: blur(10px);
+          background: rgba(255, 255, 255, 0.85);
+          backdrop-filter: blur(15px);
           padding: 50px 40px;
           border-radius: 20px;
-          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
           width: 100%;
           max-width: 450px;
           z-index: 1;
           animation: slideUp 0.6s ease-out;
+          border: 1px solid rgba(255, 255, 255, 0.3);
         }
         
         @keyframes slideUp {
@@ -819,9 +820,22 @@ app.get('/', requireAuth, async (req, res) => {
     
     body {
       font-family: 'Cairo', sans-serif;
-      background: #f1f5f9;
+      background: url('/images/campaign-background.jpg') center center / cover no-repeat fixed;
       color: var(--text);
       line-height: 1.6;
+      position: relative;
+    }
+    
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(241, 245, 249, 0.85);
+      z-index: 0;
+      pointer-events: none;
     }
     
     /* Sidebar */
@@ -831,11 +845,13 @@ app.get('/', requireAuth, async (req, res) => {
       top: 0;
       width: var(--sidebar-width);
       height: 100vh;
-      background: linear-gradient(180deg, var(--darker) 0%, var(--dark) 100%);
+      background: rgba(15, 23, 42, 0.92);
+      backdrop-filter: blur(10px);
       padding: 30px 20px;
       overflow-y: auto;
       z-index: 1000;
-      box-shadow: -5px 0 20px rgba(0, 0, 0, 0.1);
+      box-shadow: -5px 0 20px rgba(0, 0, 0, 0.2);
+      border-left: 1px solid rgba(255, 255, 255, 0.1);
     }
     
     .logo {
@@ -961,13 +977,17 @@ app.get('/', requireAuth, async (req, res) => {
       margin-right: var(--sidebar-width);
       padding: 30px;
       min-height: 100vh;
+      position: relative;
+      z-index: 1;
     }
     
     /* Header */
     .header {
-      background: white;
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(10px);
       padding: 25px 30px;
       border-radius: 15px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
       margin-bottom: 30px;
       box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
       display: flex;
@@ -1012,7 +1032,8 @@ app.get('/', requireAuth, async (req, res) => {
     }
     
     .btn-secondary {
-      background: white;
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(5px);
       color: var(--text);
       border: 2px solid var(--border);
     }
@@ -1031,10 +1052,12 @@ app.get('/', requireAuth, async (req, res) => {
     }
     
     .stat-card {
-      background: white;
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(10px);
       padding: 25px;
       border-radius: 15px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.3);
       transition: all 0.3s ease;
       position: relative;
       overflow: hidden;
@@ -1095,7 +1118,9 @@ app.get('/', requireAuth, async (req, res) => {
     
     /* Cards */
     .card {
-      background: white;
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
       padding: 25px;
       border-radius: 15px;
       box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
@@ -1114,7 +1139,9 @@ app.get('/', requireAuth, async (req, res) => {
     
     /* Chart */
     .chart-container {
-      background: white;
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
       padding: 30px;
       border-radius: 15px;
       box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
